@@ -1,55 +1,67 @@
 import React, { useState } from 'react';
-import { handleKeyDown, handlePaste, handleWheel, formatCOP } from '../utils/validations';
+import { formatCOP, handleKeyDown, handlePaste, handleWheel } from '../utils/validations';
 
 export function ProductCard({ producto, onAddToCart, showToast }) {
-  const [cantidad, setCantidad] = useState(1);
+    const [cantidadInput, setCantidadInput] = useState(1);
 
-  const handleAgregar = () => {
-    onAddToCart(producto, cantidad);
-    setCantidad(1);
-  };
+    const handleInputChange = (e) => {
+        const val = e.target.value;
+        if (val === '') {
+            setCantidadInput('');
+            return;
+        }
+        const num = parseInt(val, 10);
+        if (!isNaN(num) && num >= 1) {
+            setCantidadInput(num);
+        }
+    };
 
-  const handleChange = (e) => {
-    const val = parseInt(e.target.value) || 0;
-    if (val > producto.stock) {
-      showToast("Este es el máximo de producto disponible en stock");
-      setCantidad(producto.stock);
-    } else if (val <= 0) {
-      showToast("Cantidad mínima 1");
-      setCantidad(1);
-    } else {
-      setCantidad(val);
-    }
-  };
+    const handleAdd = () => {
+        const cantidad = cantidadInput === '' ? 1 : cantidadInput;
+        if (cantidad > producto.stock) {
+            showToast("Este es el máximo de producto disponible en stock");
+            onAddToCart(producto, producto.stock);
+        } else {
+            onAddToCart(producto, cantidad);
+        }
+        setCantidadInput(1);
+    };
 
-  const isAgotado = producto.stock <= 0;
+    const isOutOfStock = producto.stock === 0;
 
-  return (
-    <div className="product-card">
-      <h3>{producto.nombre}</h3>
-      <p className="price">{formatCOP(producto.precio)}</p>
-      <p className="stock">Stock disponible: {producto.stock}</p>
+    return (
+        <div className="product-card">
+            <img
+                src={producto.imagen}
+                alt={producto.nombre}
+                className="product-image"
+            />
+            <h3>{producto.nombre}</h3>
+            <p className="price">{formatCOP(producto.precio)}</p>
+            <p className="stock">
+                {isOutOfStock ? "Agotado" : `Stock disponible: ${producto.stock}`}
+            </p>
 
-      <div className="card-actions">
-        <input
-          type="number"
-          min="1"
-          max={producto.stock}
-          value={cantidad}
-          onKeyDown={handleKeyDown}
-          onPaste={handlePaste}
-          onWheel={handleWheel}
-          onChange={handleChange}
-          disabled={isAgotado}
-        />
-        <button
-          onClick={handleAgregar}
-          disabled={isAgotado}
-          className="btn-add"
-        >
-          {isAgotado ? 'Agotado' : 'Agregar'}
-        </button>
-      </div>
-    </div>
-  );
+            <div className="card-actions">
+                <input
+                    type="number"
+                    min="1"
+                    max={producto.stock}
+                    value={cantidadInput}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                    onPaste={handlePaste}
+                    onWheel={handleWheel}
+                    disabled={isOutOfStock}
+                />
+                <button
+                    className="btn-add"
+                    onClick={handleAdd}
+                    disabled={isOutOfStock}
+                >
+                    {isOutOfStock ? "Agotado" : "Agregar"}
+                </button>
+            </div>
+        </div>
+    );
 }
